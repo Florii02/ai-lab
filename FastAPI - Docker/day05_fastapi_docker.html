@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Day 5&colon; FastAPI &plus; Docker Deployment - Deep Dive</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="day-5-fastapi--docker-deployment---deep-dive">Day 5: FastAPI + Docker Deployment - Deep Dive</h1>
+<h2 id="learning-objectives">Learning Objectives</h2>
+<p>This guide will teach you:</p>
+<ol>
+<li><strong>FastAPI</strong> - Modern Python web framework</li>
+<li><strong>Docker</strong> - Containerization technology</li>
+<li><strong>Deployment</strong> - Getting your app on the internet</li>
+<li><strong>DevOps basics</strong> - Professional deployment practices</li>
+</ol>
+<hr>
+<h2 id="part-1-understanding-fastapi-apppy">Part 1: Understanding FastAPI (<code>app.py</code>)</h2>
+<h3 id="what-is-fastapi">What is FastAPI?</h3>
+<p>FastAPI is a modern, high-performance Python web framework for building APIs. Think of it as a way to create web services that other programs (or frontends) can talk to.</p>
+<h3 id="code-breakdown-apppy">Code Breakdown: <code>app.py</code></h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> fastapi <span class="hljs-keyword">import</span> FastAPI
+<span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> datetime
+
+app = FastAPI(title=<span class="hljs-string">&quot;EU AI App&quot;</span>, version=<span class="hljs-string">&quot;1.0.0&quot;</span>)
+</code></pre>
+<p><strong>What's happening:</strong></p>
+<ul>
+<li><code>FastAPI()</code> creates your web application instance</li>
+<li><code>title</code> and <code>version</code> are metadata (shows up in auto-generated docs)</li>
+<li><code>app</code> is the main object that handles all incoming web requests</li>
+</ul>
+<hr>
+<h3 id="endpoint-1-root-route">Endpoint 1: Root Route</h3>
+<pre><code class="language-python"><span class="hljs-meta">@app.get(<span class="hljs-params"><span class="hljs-string">&quot;/&quot;</span></span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">read_root</span>():
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-string">&quot;message&quot;</span>: <span class="hljs-string">&quot;Hello from EU AI App&quot;</span>,
+        <span class="hljs-string">&quot;timestamp&quot;</span>: datetime.now().isoformat(),
+        <span class="hljs-string">&quot;region&quot;</span>: <span class="hljs-string">&quot;EU-hosted&quot;</span>
+    }
+</code></pre>
+<p><strong>Concepts:</strong></p>
+<ol>
+<li>
+<p><strong><code>@app.get(&quot;/&quot;)</code></strong> - This is a <strong>decorator</strong></p>
+<ul>
+<li>It tells FastAPI: &quot;When someone visits the root URL (<code>/</code>), run this function&quot;</li>
+<li><code>get</code> means HTTP GET request (the most common type - used when you load a webpage)</li>
+</ul>
+</li>
+<li>
+<p><strong>Function returns a dictionary</strong></p>
+<ul>
+<li>FastAPI automatically converts Python dicts to JSON (the standard format for web APIs)</li>
+<li>JSON is like Python dict but text-based, so it can travel over the internet</li>
+</ul>
+</li>
+<li>
+<p><strong>What you get when you visit <code>http://your-server/</code>:</strong></p>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;message&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Hello from EU AI App&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;timestamp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2025-09-30T14:32:10.123456&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;region&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;EU-hosted&quot;</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3 id="endpoint-2-health-check">Endpoint 2: Health Check</h3>
+<pre><code class="language-python"><span class="hljs-meta">@app.get(<span class="hljs-params"><span class="hljs-string">&quot;/health&quot;</span></span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">health_check</span>():
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;healthy&quot;</span>, <span class="hljs-string">&quot;service&quot;</span>: <span class="hljs-string">&quot;FastAPI&quot;</span>}
+</code></pre>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li>Production apps need health checks</li>
+<li>Monitoring tools ping <code>/health</code> to ensure your service is alive</li>
+<li>Load balancers use this to know if they should route traffic to your server</li>
+</ul>
+<p><strong>Real-world analogy:</strong> Like checking if a store is open before sending customers there.</p>
+<hr>
+<h3 id="endpoint-3-dynamic-route-with-parameters">Endpoint 3: Dynamic Route with Parameters</h3>
+<pre><code class="language-python"><span class="hljs-meta">@app.get(<span class="hljs-params"><span class="hljs-string">&quot;/api/greet/{name}&quot;</span></span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">greet_user</span>(<span class="hljs-params">name: <span class="hljs-built_in">str</span></span>):
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;greeting&quot;</span>: <span class="hljs-string">f&quot;Hello, <span class="hljs-subst">{name}</span>! Welcome to the EU AI platform.&quot;</span>}
+</code></pre>
+<p><strong>Key concepts:</strong></p>
+<ol>
+<li>
+<p><strong>Path parameter:</strong> <code>{name}</code> in the URL becomes a variable</p>
+<ul>
+<li>Visit: <code>http://your-server/api/greet/Alice</code></li>
+<li>The function receives: <code>name = &quot;Alice&quot;</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Type hints:</strong> <code>name: str</code></p>
+<ul>
+<li>Tells FastAPI to expect a string</li>
+<li>FastAPI automatically validates this (rejects invalid data)</li>
+</ul>
+</li>
+<li>
+<p><strong>Why this pattern is powerful:</strong></p>
+<ul>
+<li>One function handles infinite variations</li>
+<li><code>/api/greet/Alice</code>, <code>/api/greet/Bob</code>, <code>/api/greet/Neo</code> all work</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="part-2-understanding-docker-dockerfile">Part 2: Understanding Docker (<code>Dockerfile</code>)</h2>
+<h3 id="what-problem-does-docker-solve">What Problem Does Docker Solve?</h3>
+<p><strong>The &quot;Works on My Machine&quot; Problem:</strong></p>
+<ul>
+<li>Your code works on your laptop (Python 3.11, specific libraries installed)</li>
+<li>Your friend tries to run it: doesn't work (different Python version, missing libraries)</li>
+<li>Your production server: also different environment</li>
+</ul>
+<p><strong>Docker's Solution:</strong>
+Package your app + its entire environment into a <strong>container</strong> - a standardized, portable box that runs identically everywhere.</p>
+<hr>
+<h3 id="dockerfile-line-by-line">Dockerfile Line-by-Line</h3>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.11</span>-slim
+</code></pre>
+<p><strong>What it means:</strong></p>
+<ul>
+<li>Start with an official Python 3.11 image (pre-built by Docker community)</li>
+<li><code>slim</code> = smaller version (includes only essentials)</li>
+<li>This is your <strong>base layer</strong> - like the foundation of a house</li>
+</ul>
+<hr>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span>
+</code></pre>
+<p><strong>Sets the working directory inside the container:</strong></p>
+<ul>
+<li>All subsequent commands happen in <code>/app</code></li>
+<li>Like doing <code>cd /app</code> before running commands</li>
+</ul>
+<hr>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">COPY</span><span class="language-bash"> requirements.txt .</span>
+</code></pre>
+<p><strong>Copy the requirements file from your computer into the container:</strong></p>
+<ul>
+<li><code>.</code> means &quot;current directory&quot; (which is <code>/app</code> because of WORKDIR)</li>
+<li><strong>Why copy requirements first?</strong> Docker caching optimization (explained below)</li>
+</ul>
+<hr>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">RUN</span><span class="language-bash"> pip install --no-cache-dir -r requirements.txt</span>
+</code></pre>
+<p><strong>Install Python dependencies:</strong></p>
+<ul>
+<li><code>RUN</code> executes a command during image build</li>
+<li><code>--no-cache-dir</code> saves space (doesn't store downloaded packages)</li>
+<li>This creates a layer with all your dependencies installed</li>
+</ul>
+<p><strong>Docker Layer Caching:</strong></p>
+<ul>
+<li>If <code>requirements.txt</code> doesn't change, Docker reuses this layer</li>
+<li>Makes rebuilds MUCH faster</li>
+<li>That's why we copy requirements before code (code changes more often)</li>
+</ul>
+<hr>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">COPY</span><span class="language-bash"> app.py .</span>
+</code></pre>
+<p><strong>Copy your application code:</strong></p>
+<ul>
+<li>Done after installing dependencies (cache optimization)</li>
+<li>Now your app exists inside the container</li>
+</ul>
+<hr>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">8000</span>
+</code></pre>
+<p><strong>Document that the app uses port 8000:</strong></p>
+<ul>
+<li>This is <strong>documentation only</strong> (doesn't actually open the port)</li>
+<li>The <code>-p 8000:8000</code> flag when running the container actually maps the port</li>
+</ul>
+<hr>
+<pre><code class="language-dockerfile"><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;uvicorn&quot;</span>, <span class="hljs-string">&quot;app:app&quot;</span>, <span class="hljs-string">&quot;--host&quot;</span>, <span class="hljs-string">&quot;0.0.0.0&quot;</span>, <span class="hljs-string">&quot;--port&quot;</span>, <span class="hljs-string">&quot;8000&quot;</span>]</span>
+</code></pre>
+<p><strong>The command to run when container starts:</strong></p>
+<ul>
+<li><code>uvicorn</code> = ASGI server (runs FastAPI apps)</li>
+<li><code>app:app</code> = &quot;in file <code>app.py</code>, use the <code>app</code> object&quot;</li>
+<li><code>--host 0.0.0.0</code> = listen on all network interfaces (allows external access)</li>
+<li><code>--port 8000</code> = listen on port 8000</li>
+</ul>
+<p><strong>Without <code>0.0.0.0</code>:</strong></p>
+<ul>
+<li>App would only be accessible inside the container (useless!)</li>
+<li><code>0.0.0.0</code> makes it accessible from outside</li>
+</ul>
+<hr>
+<h2 id="part-3-docker-compose-docker-composeyml">Part 3: Docker Compose (<code>docker-compose.yml</code>)</h2>
+<h3 id="what-is-docker-compose">What is Docker Compose?</h3>
+<p>Docker Compose is a tool for defining and running multi-container applications using a YAML configuration file.</p>
+<p><strong>Without Compose:</strong></p>
+<pre><code class="language-bash">docker build -t eu-ai-app .
+docker run -d -p 8000:8000 --name fastapi-app \
+  -e ENV=production --restart unless-stopped eu-ai-app
+</code></pre>
+<p><strong>With Compose:</strong></p>
+<pre><code class="language-bash">docker-compose up -d
+</code></pre>
+<p>Much simpler! Compose remembers all the settings.</p>
+<hr>
+<h3 id="docker-composeyml-breakdown">docker-compose.yml Breakdown</h3>
+<pre><code class="language-yaml"><span class="hljs-attr">version:</span> <span class="hljs-string">&#x27;3.8&#x27;</span>
+</code></pre>
+<ul>
+<li>Specifies the Compose file format version</li>
+<li><code>3.8</code> is modern and widely supported</li>
+</ul>
+<hr>
+<pre><code class="language-yaml"><span class="hljs-attr">services:</span>
+  <span class="hljs-attr">fastapi-app:</span>
+</code></pre>
+<ul>
+<li><code>services</code> = containers to run</li>
+<li><code>fastapi-app</code> = name of this service (you choose this)</li>
+</ul>
+<hr>
+<pre><code class="language-yaml">    <span class="hljs-attr">build:</span> <span class="hljs-string">.</span>
+</code></pre>
+<ul>
+<li>Build the Docker image from the current directory (<code>.</code>)</li>
+<li>Looks for <code>Dockerfile</code> automatically</li>
+</ul>
+<hr>
+<pre><code class="language-yaml">    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;8000:8000&quot;</span>
+</code></pre>
+<p><strong>Port mapping:</strong></p>
+<ul>
+<li>Format: <code>&quot;HOST:CONTAINER&quot;</code></li>
+<li>Left side (8000) = port on your computer/server</li>
+<li>Right side (8000) = port inside the container</li>
+<li>This makes <code>localhost:8000</code> on your machine route to port 8000 in the container</li>
+</ul>
+<p><strong>Example:</strong> If you used <code>&quot;3000:8000&quot;</code>:</p>
+<ul>
+<li>Visit <code>localhost:3000</code> on your browser</li>
+<li>Goes to port 8000 inside the container</li>
+</ul>
+<hr>
+<pre><code class="language-yaml">    <span class="hljs-attr">environment:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">ENV=production</span>
+</code></pre>
+<p><strong>Environment variables:</strong></p>
+<ul>
+<li>Sets <code>ENV</code> variable inside the container</li>
+<li>Your app can read this: <code>os.getenv(&quot;ENV&quot;)</code></li>
+<li>Useful for config (development vs. production)</li>
+</ul>
+<hr>
+<pre><code class="language-yaml">    <span class="hljs-attr">restart:</span> <span class="hljs-string">unless-stopped</span>
+</code></pre>
+<p><strong>Automatic restart policy:</strong></p>
+<ul>
+<li>If container crashes → automatically restart</li>
+<li>If you manually stop it → don't restart</li>
+<li>Essential for production (keeps your app running 24/7)</li>
+</ul>
+<hr>
+<h2 id="part-4-dockerignore">Part 4: .dockerignore</h2>
+<pre><code>__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.git
+.gitignore
+*.md
+</code></pre>
+<p><strong>What it does:</strong>
+Like <code>.gitignore</code> but for Docker - tells Docker what NOT to copy into the image.</p>
+<p><strong>Why it matters:</strong></p>
+<ul>
+<li>Keeps images small</li>
+<li>Faster builds</li>
+<li>No sensitive data accidentally copied</li>
+<li>No unnecessary files (compiled Python bytecode, virtual environments, docs)</li>
+</ul>
+<hr>
+<h2 id="part-5-testing-script-test_localsh">Part 5: Testing Script (<code>test_local.sh</code>)</h2>
+<pre><code class="language-bash"><span class="hljs-meta">#!/bin/bash</span>
+<span class="hljs-comment"># Test FastAPI endpoints...</span>
+
+curl http://localhost:8000/
+curl http://localhost:8000/health
+curl http://localhost:8000/api/greet/Alice
+</code></pre>
+<p><strong>What this does:</strong></p>
+<ul>
+<li><code>curl</code> = command-line tool to make HTTP requests</li>
+<li>Tests all your endpoints automatically</li>
+<li>Should be run after starting the app locally</li>
+</ul>
+<p><strong>How to use:</strong></p>
+<pre><code class="language-bash"><span class="hljs-built_in">chmod</span> +x test_local.sh  <span class="hljs-comment"># Make executable (one time)</span>
+./test_local.sh          <span class="hljs-comment"># Run tests</span>
+</code></pre>
+<hr>
+<h2 id="-part-6-deployment-concepts">&lt; Part 6: Deployment Concepts</h2>
+<h3 id="the-deployment-stack">The Deployment Stack</h3>
+<pre><code>Internet → VPS Firewall → Nginx (reverse proxy) → Docker Container → FastAPI
+</code></pre>
+<p><strong>Each layer explained:</strong></p>
+<ol>
+<li>
+<p><strong>VPS (Virtual Private Server):</strong></p>
+<ul>
+<li>Your own virtual computer in a datacenter</li>
+<li>Always online, connected to the internet</li>
+<li>You have full control (like root access)</li>
+</ul>
+</li>
+<li>
+<p><strong>Firewall (UFW):</strong></p>
+<ul>
+<li>Blocks unwanted traffic</li>
+<li>Only allows ports 22 (SSH), 80 (HTTP), 443 (HTTPS), 8000 (your app)</li>
+</ul>
+</li>
+<li>
+<p><strong>Nginx (Reverse Proxy):</strong></p>
+<ul>
+<li>Sits in front of your app</li>
+<li>Handles HTTPS/SSL certificates</li>
+<li>Can serve multiple apps on one server</li>
+<li>Buffers requests (protects your app from slow clients)</li>
+</ul>
+</li>
+<li>
+<p><strong>Docker Container:</strong></p>
+<ul>
+<li>Isolated environment running your app</li>
+<li>Can be easily replaced/updated without affecting the host</li>
+</ul>
+</li>
+<li>
+<p><strong>FastAPI:</strong></p>
+<ul>
+<li>Your actual application code</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="why-use-nginx-instead-of-exposing-fastapi-directly">Why Use Nginx Instead of Exposing FastAPI Directly?</h3>
+<p><strong>Without Nginx:</strong></p>
+<pre><code>User → FastAPI:8000
+</code></pre>
+<p><strong>Problems:</strong></p>
+<ul>
+<li>No HTTPS (data sent in plain text)</li>
+<li>FastAPI handles static files poorly</li>
+<li>Can't easily run multiple apps</li>
+<li>No caching</li>
+<li>Vulnerable to slow clients (Slowloris attacks)</li>
+</ul>
+<p><strong>With Nginx:</strong></p>
+<pre><code>User → Nginx:443 (HTTPS) → FastAPI:8000
+</code></pre>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li> Free HTTPS with Let's Encrypt</li>
+<li> Better performance (Nginx is optimized for this)</li>
+<li> Can run multiple apps (different domains/paths → different backends)</li>
+<li> Caching, rate limiting, load balancing</li>
+<li> Professional-grade security</li>
+</ul>
+<hr>
+<h2 id="part-7-hosting-options-comparison">Part 7: Hosting Options Comparison</h2>
+<h3 id="hostinger-vps-recommended-for-learning">Hostinger VPS (Recommended for learning)</h3>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>EU-based (GDPR compliant)</li>
+<li>Full control (root access)</li>
+<li>Affordable (€4-8/month)</li>
+<li>Learn real server management</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>You manage everything (updates, security, etc.)</li>
+<li>No automatic scaling</li>
+</ul>
+<p><strong>When to choose:</strong> You want to learn DevOps, need full control, EU data residency important.</p>
+<hr>
+<h3 id="huggingface-spaces-easiest">HuggingFace Spaces (Easiest)</h3>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Free tier</li>
+<li>Zero server management</li>
+<li>Git-push to deploy</li>
+<li>Built-in HTTPS</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Limited resources (CPU-only on free tier)</li>
+<li>Public by default</li>
+<li>Less control</li>
+</ul>
+<p><strong>When to choose:</strong> Quick demos, proof of concepts, learning Docker basics.</p>
+<hr>
+<h3 id="hetzner-best-value-for-production">Hetzner (Best value for production)</h3>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>German company (strong privacy)</li>
+<li>Best price/performance in EU</li>
+<li>Excellent network</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Same as any VPS (you manage it)</li>
+</ul>
+<p><strong>When to choose:</strong> Production apps, need reliability + good price.</p>
+<hr>
+<h2 id="part-8-security-best-practices-from-the-scripts">Part 8: Security Best Practices (From the Scripts)</h2>
+<h3 id="1-non-root-user">1. <strong>Non-root User</strong></h3>
+<pre><code class="language-bash">adduser deploy
+usermod -aG sudo deploy
+usermod -aG docker deploy
+</code></pre>
+<p><strong>Why:</strong></p>
+<ul>
+<li>Running as <code>root</code> is dangerous (one mistake = full system compromise)</li>
+<li><code>deploy</code> user has limited permissions</li>
+<li>Can still use <code>sudo</code> when needed</li>
+</ul>
+<hr>
+<h3 id="2-firewall-ufw">2. <strong>Firewall (UFW)</strong></h3>
+<pre><code class="language-bash">sudo ufw allow 22/tcp   <span class="hljs-comment"># SSH</span>
+sudo ufw allow 80/tcp   <span class="hljs-comment"># HTTP</span>
+sudo ufw allow 443/tcp  <span class="hljs-comment"># HTTPS</span>
+sudo ufw <span class="hljs-built_in">enable</span>
+</code></pre>
+<p><strong>Why:</strong></p>
+<ul>
+<li>Blocks all ports except those explicitly allowed</li>
+<li>Prevents hackers from accessing unused services</li>
+</ul>
+<hr>
+<h3 id="3-https-with-lets-encrypt">3. <strong>HTTPS with Let's Encrypt</strong></h3>
+<pre><code class="language-bash">sudo certbot --nginx -d yourdomain.com
+</code></pre>
+<p><strong>Why:</strong></p>
+<ul>
+<li>Encrypts traffic (passwords, API keys can't be intercepted)</li>
+<li>Modern browsers warn users about non-HTTPS sites</li>
+<li>Free with Let's Encrypt</li>
+</ul>
+<hr>
+<h3 id="4-docker-security">4. <strong>Docker Security</strong></h3>
+<ul>
+<li>Running app as non-root user inside container</li>
+<li><code>restart: unless-stopped</code> (not <code>always</code> - allows manual stops)</li>
+<li><code>.dockerignore</code> prevents sensitive files from being copied</li>
+</ul>
+<hr>
+<h2 id="-part-9-common-commands-explained">=� Part 9: Common Commands Explained</h2>
+<h3 id="docker-commands">Docker Commands</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Build an image from Dockerfile</span>
+docker build -t eu-ai-app .
+</code></pre>
+<ul>
+<li><code>-t eu-ai-app</code> = tag (name) the image</li>
+<li><code>.</code> = build context (current directory)</li>
+</ul>
+<hr>
+<pre><code class="language-bash"><span class="hljs-comment"># Run a container</span>
+docker run -d -p 8000:8000 --name fastapi-app eu-ai-app
+</code></pre>
+<ul>
+<li><code>-d</code> = detached mode (runs in background)</li>
+<li><code>-p 8000:8000</code> = port mapping (host:container)</li>
+<li><code>--name fastapi-app</code> = name the container (easier to reference)</li>
+<li><code>eu-ai-app</code> = image to use</li>
+</ul>
+<hr>
+<pre><code class="language-bash"><span class="hljs-comment"># View running containers</span>
+docker ps
+</code></pre>
+<pre><code class="language-bash"><span class="hljs-comment"># View logs</span>
+docker logs fastapi-app
+docker logs -f fastapi-app  <span class="hljs-comment"># -f = follow (live logs)</span>
+</code></pre>
+<pre><code class="language-bash"><span class="hljs-comment"># Stop and remove container</span>
+docker stop fastapi-app
+docker <span class="hljs-built_in">rm</span> fastapi-app
+</code></pre>
+<hr>
+<h3 id="docker-compose-commands">Docker Compose Commands</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Start services (build if needed)</span>
+docker-compose up -d
+</code></pre>
+<ul>
+<li><code>-d</code> = detached (background)</li>
+</ul>
+<hr>
+<pre><code class="language-bash"><span class="hljs-comment"># Stop services (containers still exist)</span>
+docker-compose stop
+
+<span class="hljs-comment"># Stop and remove containers</span>
+docker-compose down
+
+<span class="hljs-comment"># Rebuild and restart</span>
+docker-compose up -d --build
+</code></pre>
+<hr>
+<pre><code class="language-bash"><span class="hljs-comment"># View logs</span>
+docker-compose logs -f
+</code></pre>
+<hr>
+<h2 id="part-10-the-complete-flow">Part 10: The Complete Flow</h2>
+<h3 id="local-development">Local Development</h3>
+<ol>
+<li>Write code (<code>app.py</code>)</li>
+<li>Test without Docker: <code>uvicorn app:app --reload</code></li>
+<li>Visit <code>http://localhost:8000/docs</code> (auto-generated API docs!)</li>
+<li>Test with Docker: <code>docker-compose up</code></li>
+<li>Run tests: <code>./test_local.sh</code></li>
+</ol>
+<h3 id="deployment">Deployment</h3>
+<ol>
+<li>Get VPS (Hostinger/Hetzner)</li>
+<li>SSH into server: <code>ssh root@YOUR_VPS_IP</code></li>
+<li>Install Docker</li>
+<li>Upload code (Git or SCP)</li>
+<li>Run: <code>docker-compose up -d</code></li>
+<li>Configure Nginx (reverse proxy)</li>
+<li>Add HTTPS (Let's Encrypt)</li>
+<li>Test from internet</li>
+</ol>
+<hr>
+<h2 id="what-youve-learned">What You've Learned</h2>
+<h3 id="core-technologies">Core Technologies</h3>
+<ul>
+<li><strong>FastAPI</strong> - Modern Python web framework (faster than Flask)</li>
+<li><strong>Uvicorn</strong> - ASGI server (runs FastAPI)</li>
+<li><strong>Docker</strong> - Containerization (package app + dependencies)</li>
+<li><strong>Docker Compose</strong> - Multi-container orchestration</li>
+<li><strong>Nginx</strong> - Reverse proxy (HTTPS, performance, security)</li>
+</ul>
+<h3 id="devops-concepts">DevOps Concepts</h3>
+<ul>
+<li><strong>Deployment</strong> - Getting code from laptop → internet</li>
+<li><strong>Containerization</strong> - &quot;Works on my machine&quot; → &quot;Works everywhere&quot;</li>
+<li><strong>Reverse Proxy</strong> - Nginx sits between users and your app</li>
+<li><strong>Port Mapping</strong> - Connecting host ports to container ports</li>
+<li><strong>Health Checks</strong> - Monitoring if your service is alive</li>
+<li><strong>Environment Variables</strong> - Configuration without hardcoding</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ul>
+<li>Layer caching in Docker (copy requirements before code)</li>
+<li><code>.dockerignore</code> (keep images small)</li>
+<li>Non-root users (security)</li>
+<li>Firewall configuration (UFW)</li>
+<li>HTTPS with Let's Encrypt (encryption)</li>
+<li>Automatic restarts (<code>restart: unless-stopped</code>)</li>
+</ul>
+<hr>
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li><strong>Run the script</strong> - Create all files and test locally</li>
+<li><strong>Experiment</strong> - Add new endpoints to <code>app.py</code></li>
+<li><strong>Deploy</strong> - Get a Hostinger VPS and deploy for real</li>
+<li><strong>Monitor</strong> - Add logging, set up uptime monitoring</li>
+<li><strong>Scale</strong> - Add database, authentication, multiple services</li>
+</ol>
+<hr>
+<h2 id="key-insights">Key Insights</h2>
+<h3 id="why-this-stack">Why This Stack?</h3>
+<p><strong>Python + FastAPI:</strong></p>
+<ul>
+<li>Great for AI/ML (most ML libraries are Python)</li>
+<li>Fast performance (comparable to Node.js)</li>
+<li>Auto-generated API docs (saves time)</li>
+</ul>
+<p><strong>Docker:</strong></p>
+<ul>
+<li>Consistent environments (dev, staging, production identical)</li>
+<li>Easy rollbacks (keep old images)</li>
+<li>Scalable (can run 1 or 1000 containers)</li>
+</ul>
+<p><strong>VPS (vs. serverless):</strong></p>
+<ul>
+<li>Full control</li>
+<li>Learn real server management</li>
+<li>Fixed costs (no surprise bills)</li>
+<li>Good for always-on services</li>
+</ul>
+<hr>
+<h2 id="faq">FAQ</h2>
+<h3 id="q-why-not-just-run-python-directly-on-the-server">Q: Why not just run Python directly on the server?</h3>
+<p><strong>A:</strong> Docker gives you:</p>
+<ul>
+<li>Reproducible environments</li>
+<li>Easy updates (replace container)</li>
+<li>Isolation (your app can't break system packages)</li>
+<li>Portability (move to any cloud provider)</li>
+</ul>
+<h3 id="q-why-nginx-when-fastapi-can-serve-http-directly">Q: Why Nginx when FastAPI can serve HTTP directly?</h3>
+<p><strong>A:</strong> Nginx is battle-tested for:</p>
+<ul>
+<li>HTTPS/SSL termination</li>
+<li>Static file serving</li>
+<li>Request buffering (protects against slow clients)</li>
+<li>Load balancing (if you scale to multiple containers)</li>
+</ul>
+<h3 id="q-whats-the-difference-between-docker-run-and-docker-compose">Q: What's the difference between <code>docker run</code> and <code>docker-compose</code>?</h3>
+<p><strong>A:</strong></p>
+<ul>
+<li><code>docker run</code> - Manually specify all options each time</li>
+<li><code>docker-compose</code> - Configuration file (infrastructure as code)</li>
+<li>Compose is better for anything beyond toy projects</li>
+</ul>
+<h3 id="q-why-0000-instead-of-localhost">Q: Why <code>0.0.0.0</code> instead of <code>localhost</code>?</h3>
+<p><strong>A:</strong> Inside Docker:</p>
+<ul>
+<li><code>localhost</code> = only inside the container</li>
+<li><code>0.0.0.0</code> = all network interfaces (allows external access)</li>
+</ul>
+<hr>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://fastapi.tiangolo.com">FastAPI Documentation</a></li>
+<li><a href="https://docs.docker.com">Docker Documentation</a></li>
+<li><a href="https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/">Nginx Reverse Proxy Guide</a></li>
+<li><a href="https://letsencrypt.org">Let's Encrypt</a></li>
+<li><a href="https://www.hostinger.com/vps-hosting">Hostinger VPS</a></li>
+</ul>
+<hr>
+<p><strong>You now understand every part of this deployment stack!</strong></p>
+<p>The beauty of this approach: each component (FastAPI, Docker, Nginx) is industry-standard and used by companies like Uber, Netflix, and Spotify.</p>
+
+            
+            
+        </body>
+        </html>

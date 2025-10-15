@@ -1,0 +1,1 @@
+print("VSCode is ready 🚀")

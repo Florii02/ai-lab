@@ -1,0 +1,5 @@
+OrderID,CustomerName,Email,Country,Amount,OrderDate,AmountWithVAT,HighValue,ProcessedDate
+1001,Hans Müller,hans@example.de,DE,150.0,2025-01-15,178.5,False,2025-09-30 20:07:55.086198
+1002,Marie Dubois,marie@example.fr,FR,200.0,2025-01-16,238.0,False,2025-09-30 20:07:55.086198
+1004,Luigi Rossi,luigi@example.it,IT,175.5,2025-01-18,208.845,False,2025-09-30 20:07:55.086198
+1005,Emma Schmidt,noemail@example.com,DE,220.0,2025-01-19,261.8,True,2025-09-30 20:07:55.086198

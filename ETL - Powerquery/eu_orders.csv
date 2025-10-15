@@ -1,0 +1,6 @@
+OrderID,CustomerName,Email,Country,Amount,OrderDate
+1001,Hans Müller,hans@example.de,DE,150.00,2025-01-15
+1002,Marie Dubois,marie@example.fr,FR,200.00,2025-01-16
+1003,John Doe,john@example.us,US,300.00,2025-01-17
+1004,Luigi Rossi,luigi@example.it,IT,175.50,2025-01-18
+1005,Emma Schmidt,,DE,220.00,2025-01-19

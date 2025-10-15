@@ -1,16 +1,18 @@
-# My AI/Context Engineering Notebook
-This repo contains a collection of knowledge on IT topics, with a strong focus on AI, Data Analythics and Data Communication Pipelines
+# ai-lab
 
-# 🚀 14‑Day “Sellable Skills” AI & Context Engineering Sprint
+## My AI/Context Engineering Notebook
+This repo contains a collection of knowledge on IT topics, with a strong focus on AI, Data Analytics and Data Communication Pipelines
+
+# 🚀 14‑Day "Sellable Skills" AI & Context Engineering Sprint
 
 ---
 
 ## Day 1: Workspace Setup + Git Workflow
 - Install VSCode, Git, Python (via Anaconda or pyenv).
 - Set up VSCode extensions: Python, GitLens, Markdown All In One.
-- Initialize personal GitHub repo (“ai-lab-notes”).
+- Initialize personal GitHub repo ("ai-lab-notes").
 - Learn: `git clone` → `git add/commit/push` → `pull` → `branch` → `reset`.
-- 📓 Document: *“My Setup Log Day 1”* in repo.
+- 📓 Document: *"My Setup Log Day 1"* in repo.
 
 ---
 
@@ -31,7 +33,7 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
   - Push into Excel.
   - Open Excel → PowerQuery → model and transform.
 - Emphasize GDPR‑safe local datasets.
-- 📓 Document: *“ETL basics with pandas + PowerQuery”*.
+- 📓 Document: *"ETL basics with pandas + PowerQuery"*.
 
 ---
 
@@ -39,16 +41,16 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
 - Learn REST basics: GET, POST, headers, tokens.
 - Use Python `requests` to call e.g. EU weather API.
 - Push results to local CSV or Google Sheets.
-- Learn webhooks in Make.com: create “catch webhook → write to Sheets”.
+- Learn webhooks in Make.com: create "catch webhook → write to Sheets".
 - 📓 Document: *API + Webhook patterns (with example code)*.
 
 ---
 
 ## Day 5: Deployment First – FastAPI + Docker
-- Create very simple Python FastAPI endpoint: “Hello from EU AI App”.
+- Create very simple Python FastAPI endpoint: "Hello from EU AI App".
 - Containerize with Docker.
 - Host lean: HuggingFace Spaces (EU hosting) OR Hetzner/Scaleway instance.
-- 📓 Document: *“FastAPI + Docker deployment guide”*.
+- 📓 Document: *"FastAPI + Docker deployment guide"*.
 
 ---
 
@@ -61,7 +63,7 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
 ---
 
 ## Day 7–8: Context Engineering Basics
-- Markdown “Prompt Book”:
+- Markdown "Prompt Book":
   - Persona + Task.
   - Chain‑of‑thought.
   - Debugging (re‑prompt / refine context).
@@ -76,7 +78,7 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
 - Vectorize: ChromaDB / FAISS local.
 - Build minimal retrieval pipeline.
 - Expose via your FastAPI deployment so it plugs into Make.com.
-- 📓 Document: *“RAG integration pipeline EU‑safe”*.
+- 📓 Document: *"RAG integration pipeline EU‑safe"*.
 
 ---
 
@@ -84,7 +86,7 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
 - Extend yesterday: webhook → query vector store → return answer.
 - Wrap in Make.com automation (query knowledge base).
 - GDPR note: ensure local/EU‑only storage.
-- 📓 Document: *“AI‑as‑a‑Service with ETL + Automations in 1 flow”*.
+- 📓 Document: *"AI‑as‑a‑Service with ETL + Automations in 1 flow"*.
 
 ---
 
@@ -100,7 +102,7 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
 - Automate data push into Power BI via APIs (if corporate safe).
 - Alternative: Local EU dashboards (Metabase free + EU VM).
 - Add AI‑powered insights summary → feed into dashboard text fields.
-- 📓 Document: *“Analytics + AI storytelling dashboards”*.
+- 📓 Document: *"Analytics + AI storytelling dashboards"*.
 
 ---
 
@@ -117,8 +119,8 @@ This repo contains a collection of knowledge on IT topics, with a strong focus o
 
 ## Day 14: Wrap‑Up + Portfolio Packaging
 - Polish Markdown repo → structured like a knowledgebase/manual.
-- Record key *“Sellable Use Cases”* logs:
+- Record key *"Sellable Use Cases"* logs:
   - GDPR‑compliant Q&A bot.
   - Business data alert automation.
   - AI‑driven dashboard pipeline.
-- Bonus: Deploy repo/docs with MkDocs or GitHub Pages → shareable *“playbook”*.
+- Bonus: Deploy repo/docs with MkDocs or GitHub Pages → shareable *"playbook"*.
